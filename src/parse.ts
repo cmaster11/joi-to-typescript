@@ -160,7 +160,7 @@ function typeContentToTsHelper(
       }
       if (doExport) {
         return {
-          tsContent: `export interface ${parsedSchema.interfaceOrTypeName} ${objectStr}`,
+          tsContent: `${settings.generateDTS ? '' : 'export '}interface ${parsedSchema.interfaceOrTypeName} ${objectStr}`,
           jsDoc: parsedSchema.jsDoc
         };
       }

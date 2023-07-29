@@ -1,13 +1,13 @@
-import { AnySchema } from 'joi';
+import {AnySchema} from 'joi';
 import Path from 'path';
 
-import { Settings, ConvertedType, InputFileFilter } from './types';
-import { convertFilesInDirectory } from './convertFilesInDirectory';
-import { writeInterfaceFile } from './writeInterfaceFile';
-import { convertSchemaInternal } from './analyseSchemaFile';
-import { writeIndexFile } from './write';
+import {Settings, ConvertedType, InputFileFilter} from './types';
+import {convertFilesInDirectory} from './convertFilesInDirectory';
+import {writeInterfaceFile} from './writeInterfaceFile';
+import {convertSchemaInternal} from './analyseSchemaFile';
+import {writeIndexFile} from './write';
 
-export { Settings };
+export {Settings};
 
 /**
  * Apply defaults to the Partial Settings parameter
@@ -36,6 +36,7 @@ function defaultSettings(settings: Partial<Settings>): Settings {
       supplyDefaultsInType: false,
       inputFileFilter: InputFileFilter.Default,
       omitIndexFiles: false,
+      generateDTS: false,
     },
     settings
   ) as Settings;
@@ -73,7 +74,7 @@ export async function convertFromDirectory(settings: Partial<Settings>): Promise
     writeInterfaceFile(appSettings, exportType.typeFileName, filesInDirectory.types);
   }
 
-  if (appSettings.indexAllToRoot || appSettings.flattenTree) {
+  if (!appSettings.generateDTS && (appSettings.indexAllToRoot || appSettings.flattenTree)) {
     // Write index.ts
     writeIndexFile(appSettings, filesInDirectory.typeFileNames);
   }

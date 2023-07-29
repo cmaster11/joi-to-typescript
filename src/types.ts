@@ -96,6 +96,12 @@ export interface Settings {
    * @default false
    */
   readonly omitIndexFiles: boolean
+  /**
+   * If true, generated interface files will be pure d.ts files, not containing export keywords
+   * Implies no index files will be created (even in the root directory)
+   * @default false
+   */
+  readonly generateDTS: boolean
 }
 
 export class InputFileFilter {

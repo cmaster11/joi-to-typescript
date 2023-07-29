@@ -1,7 +1,7 @@
 import Path from 'path';
-import { writeFileSync } from 'fs';
+import {writeFileSync} from 'fs';
 
-import { Settings, GenerateTypeFile } from './types';
+import {Settings, GenerateTypeFile} from './types';
 
 /**
  * Write interface file
@@ -17,17 +17,18 @@ export async function writeInterfaceFile(
   if (generatedFile && generatedFile.fileContent && generatedFile.typeFileName) {
     let typeImports = '';
     if (settings.flattenTree) {
-      const externalTypeNames = generatedFile.externalTypes.map(typeToBeWritten => typeToBeWritten.customTypes).flat();
-      typeImports = externalTypeNames.length == 0 ? '' : `import { ${externalTypeNames.join(', ')} } from '.';\n\n`;
+      const externalTypeNames = generatedFile.externalTypes.map(typeToBeWritten => typeToBeWritten.customTypes)
+                                             .flat();
+      typeImports = (settings.generateDTS || externalTypeNames.length == 0) ? '' : `import { ${externalTypeNames.join(', ')} } from '.';\n\n`;
     } else {
       const customTypeLocationDict: { [id: string]: string[] } = {};
       for (const externalCustomType of generatedFile.externalTypes
-        .map(x => x.customTypes)
-        .flat()
-        .filter((value, index, self) => {
-          // Remove Duplicates
-          return self.indexOf(value) === index;
-        })) {
+                                                    .map(x => x.customTypes)
+                                                    .flat()
+                                                    .filter((value, index, self) => {
+                                                      // Remove Duplicates
+                                                      return self.indexOf(value) === index;
+                                                    })) {
         if (settings.indexAllToRoot) {
           if (!customTypeLocationDict[settings.typeOutputDirectory]) {
             customTypeLocationDict[settings.typeOutputDirectory] = [];
@@ -57,13 +58,15 @@ export async function writeInterfaceFile(
         }
       }
 
-      for (const customTypeLocation in customTypeLocationDict) {
-        let relativePath = Path.relative(generatedFile.typeFileLocation, customTypeLocation);
-        relativePath = relativePath ? `${relativePath}` : '.';
-        relativePath = relativePath.includes('..') || relativePath == '.' ? relativePath : `./${relativePath}`;
-        typeImports += `import { ${customTypeLocationDict[customTypeLocation].join(
-          ', '
-        )} } from '${relativePath.replace(/\\/g, '/')}';\n`;
+      if (!settings.generateDTS) {
+        for (const customTypeLocation in customTypeLocationDict) {
+          let relativePath = Path.relative(generatedFile.typeFileLocation, customTypeLocation);
+          relativePath = relativePath ? `${relativePath}` : '.';
+          relativePath = relativePath.includes('..') || relativePath == '.' ? relativePath : `./${relativePath}`;
+          typeImports += `import { ${customTypeLocationDict[customTypeLocation].join(
+            ', '
+          )} } from '${relativePath.replace(/\\/g, '/')}';\n`;
+        }
       }
 
       if (typeImports) {
@@ -76,7 +79,7 @@ export async function writeInterfaceFile(
       `${Path.join(
         settings.flattenTree ? settings.typeOutputDirectory : generatedFile.typeFileLocation,
         typeFileName
-      )}.ts`,
+      )}${settings.generateDTS ? '.d' : ''}.ts`,
       fileContent
     );
     return generatedFile.typeFileName;
