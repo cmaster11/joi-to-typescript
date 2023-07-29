@@ -256,6 +256,8 @@ export interface Settings {
   /**
    * If true, generated interface files will be pure d.ts files, not containing export keywords.
    * Implies no index files will be created (even in the root directory)
+   * For repeated usages you will need to also set
+   *    inputFileFilter: /(?<!.d)\.(ts)$/
    * @default false
    */
   generateDTS: boolean
