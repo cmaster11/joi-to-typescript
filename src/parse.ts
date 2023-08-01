@@ -106,7 +106,7 @@ function typeContentToTsHelper(
         : `${content}[]`;
       if (doExport) {
         return {
-          tsContent: `export type ${parsedSchema.interfaceOrTypeName} = ${arrayStr};`,
+          tsContent: `${settings.generateDTS ? '' : 'export '}type ${parsedSchema.interfaceOrTypeName} = ${arrayStr};`,
           jsDoc: parsedSchema.jsDoc
         };
       }
@@ -122,7 +122,7 @@ function typeContentToTsHelper(
         : unionStr;
       if (doExport) {
         return {
-          tsContent: `export type ${parsedSchema.interfaceOrTypeName} = ${finalStr};`,
+          tsContent: `${settings.generateDTS ? '' : 'export '}type ${parsedSchema.interfaceOrTypeName} = ${finalStr};`,
           jsDoc: parsedSchema.jsDoc
         };
       }

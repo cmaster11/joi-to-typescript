@@ -33,6 +33,12 @@ describe('Create interfaces from schema files as d.ts files', () => {
       .not
       .toContain('export')
 
+    expect(existsSync(`${typeOutputDirectory}/RawType.d.ts`))
+      .toBe(true)
+    expect(readFileSync(`${typeOutputDirectory}/RawType.d.ts`, 'utf8'))
+      .not
+      .toContain('export')
+
     expect(existsSync(`${typeOutputDirectory}/index.ts`))
       .toBe(false)
   });
