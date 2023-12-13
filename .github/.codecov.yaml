@@ -1,9 +1,0 @@
-coverage:
-  status:
-    project:
-      default:
-        target: 95%
-    patch:
-      default:
-        enabled: no
-  range: "95...100"

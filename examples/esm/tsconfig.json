@@ -1,8 +1,0 @@
-{
-  "compilerOptions": {
-    "module": "ESNext",
-    "esModuleInterop": true,
-    "moduleResolution": "node"
-  },
-  "include": ["src"]
-}
