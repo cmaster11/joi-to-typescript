@@ -18,7 +18,7 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - run: yarn
       - run: yarn build
-      - run: tar -czf release.tar.gz -C dist .
+      - run: tar -czf release.tar.gz package.json dist
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
