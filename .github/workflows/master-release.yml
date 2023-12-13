@@ -39,4 +39,4 @@ jobs:
 
           git add .
           git commit -m "release-${GITHUB_SHA}"
-          git push
+          git push --set-upstream origin master-release-dist
