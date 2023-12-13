@@ -17,11 +17,26 @@ jobs:
           node-version: "18.x"
           registry-url: https://registry.npmjs.org/
       - run: yarn
+      - run: yarn lint
       - run: yarn build
-      - run: tar -czf release.tar.gz package.json dist
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: master-${{ github.sha }}
-          files: |
-            release.tar.gz
+      - run: yarn test
+
+      - run: |
+          set -euo pipefail
+
+          TMP="$(mktemp)"
+          cp dist "$TMP/"
+          cp package.json "$TMP/"
+          cp .git "$TMP/"
+
+          cd "$TMP"
+
+          git switch -c master-release-dist
+          git fetch || true
+
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          git add .
+          git commit -m "release-${GITHUB_SHA}"
+          git push
