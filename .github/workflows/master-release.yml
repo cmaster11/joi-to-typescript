@@ -24,7 +24,7 @@ jobs:
       - run: |
           set -euo pipefail
 
-          TMP="$(mktemp)"
+          TMP="$(mktemp -d)"
           cp dist "$TMP/"
           cp package.json "$TMP/"
           cp .git "$TMP/"
