@@ -18,9 +18,10 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - run: yarn
       - run: yarn build
+      - run: tar -czf release.tar.gz -C dist .
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: master-${{ github.ref }}
+          tag_name: master-${{ github.sha }}
           files: |
-            dist/**
+            release.tar.gz
