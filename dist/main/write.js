@@ -54,7 +54,7 @@ function getJsDocString(settings, name, jsDoc, indentLevel = 0) {
     if (settings.commentEverything || (jsDoc && jsDoc.description)) {
         let description = name;
         if (jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.description) {
-            description = jsDoc.description.trim();
+            description = getStringIndentation(jsDoc.description).deIndentedString;
         }
         lines.push(...description.split('\n').map(line => ` * ${line}`.trimEnd()));
     }
@@ -63,13 +63,13 @@ function getJsDocString(settings, name, jsDoc, indentLevel = 0) {
         lines.push(' *');
     }
     for (const example of (_e = jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.examples) !== null && _e !== void 0 ? _e : []) {
-        const trimmed = example.trim();
-        if (trimmed.includes('\n')) {
+        const deIndented = getStringIndentation(example).deIndentedString;
+        if (deIndented.includes('\n')) {
             lines.push(` * @example`);
-            lines.push(...trimmed.split('\n').map(line => ` * ${line}`.trimEnd()));
+            lines.push(...deIndented.split('\n').map(line => ` * ${line}`.trimEnd()));
         }
         else {
-            lines.push(` * @example ${trimmed}`);
+            lines.push(` * @example ${deIndented}`);
         }
     }
     // Add JsDoc boundaries
@@ -78,3 +78,31 @@ function getJsDocString(settings, name, jsDoc, indentLevel = 0) {
     return lines.map(line => `${getIndentStr(settings, indentLevel)}${line}`).join('\n') + '\n';
 }
 exports.getJsDocString = getJsDocString;
+/**
+ * Given an indented string, uses the first line's indentation as base to de-indent
+ * the rest of the string, and returns both the de-indented string and the
+ * indentation found as prefix.
+ */
+function getStringIndentation(value) {
+    const lines = value.split('\n');
+    let indent = '';
+    for (const line of lines) {
+        // Skip initial newlines
+        if (line.trim() == '') {
+            continue;
+        }
+        const match = /^(\s+)\b/.exec(line);
+        if (match) {
+            indent = match[1];
+        }
+        break;
+    }
+    const deIndentedString = lines
+        .map(line => (line.startsWith(indent) ? line.substring(indent.length) : line))
+        .join('\n')
+        .trim();
+    return {
+        deIndentedString,
+        indent
+    };
+}
