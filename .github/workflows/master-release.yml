@@ -22,21 +22,41 @@ jobs:
       - run: yarn test
 
       - run: |
+          git config --global user.name github-actions
+          git config --global user.email github-actions@github.com
+          git config --global pull.ff only
+
+      - run: |
+          set -euo pipefail
+          # Make sure the remote branch exists or bootstrap it
+          TMP="$(mktemp -d)"
+          cp -r .git "$TMP/"
+          cd "$TMP"
+          git fetch
+          git switch -c master-release-dist
+          git branch --set-upstream-to=origin/master-release-dist master-release-dist && { exit 0; }
+          git add .
+          git commit -m "First empty commit"
+          git push --set-upstream origin master-release-dist
+
+      - uses: actions/checkout@v4
+        with:
+          ref: master-release-dist
+          path: master-release-dist
+      - run: |
           set -euo pipefail
 
-          TMP="$(mktemp -d)"
-          cp -r dist "$TMP/"
-          cp package.json "$TMP/"
-          cp -r .git "$TMP/"
+          wdir="$(pwd)"
+          branchDir="${GITHUB_WORKSPACE}/master-release-dist"
 
-          cd "$TMP"
+          cp -r "${wdir}/dist" "${branchDir}/"
+          cp "${wdir}/package.json" "${branchDir}/"
 
-          git switch -c master-release-dist
-          git fetch || true
-
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-
+          cd "${branchDir}"
           git add .
           git commit -m "release-${GITHUB_SHA}"
-          git push --set-upstream origin master-release-dist
+          git push
+          git tag "release-${GITHUB_SHA}"
+          git push --tags
+
+          echo "Released: release-${GITHUB_SHA}"
