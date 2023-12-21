@@ -54,7 +54,7 @@ jobs:
 
           cd "${branchDir}"
           git add .
-          git commit -m "release-${GITHUB_SHA}"
+          git commit -m "release-${GITHUB_SHA}" || true
           git push
           git tag "release-${GITHUB_SHA}"
           git push --tags
