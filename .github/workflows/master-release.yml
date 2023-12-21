@@ -60,3 +60,7 @@ jobs:
           git push --tags
 
           echo "Released: release-${GITHUB_SHA}"
+
+      - uses: ncipollo/release-action@v1
+        with:
+          tag: release-${{ github.sha }}
