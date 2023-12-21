@@ -140,9 +140,15 @@ function typeContentToTsHelper(settings, parsedSchema, indentLevel, doExport = f
             }
             return { tsContent: finalStr, jsDoc: parsedSchema.jsDoc };
         }
+        case 'objectWithUndefinedKeys':
         case 'object': {
             if (!children.length && !doExport) {
-                return { tsContent: 'object', jsDoc: parsedSchema.jsDoc };
+                if (parsedSchema.joinOperation == 'objectWithUndefinedKeys') {
+                    return { tsContent: 'object', jsDoc: parsedSchema.jsDoc };
+                }
+                else {
+                    return { tsContent: '{}', jsDoc: parsedSchema.jsDoc };
+                }
             }
             // interface can have no properties {} if the joi object has none defined
             let objectStr = '{}';
@@ -469,6 +475,11 @@ function parseUnknown(details, settings) {
 }
 function parseObjects(details, settings) {
     var _a, _b;
+    const joinOperation = details.keys === undefined
+        ? // When using Joi.object() without any argument, joi defaults to allowing ANY key/pair
+            // inside the object. This is reflected in the absence of the `keys` field in the `details` var.
+            'objectWithUndefinedKeys'
+        : 'object';
     let children = (0, utils_1.filterMap)(Object.entries(details.keys || {}), ([key, value]) => {
         const parsedSchema = parseSchema(value, settings);
         // The only type that could return this is alternatives
@@ -506,8 +517,8 @@ function parseObjects(details, settings) {
     const allowedValues = createAllowTypes(details);
     // at least one value
     if (allowedValues.length !== 0) {
-        allowedValues.unshift((0, types_1.makeTypeContentRoot)({ joinOperation: 'object', children, interfaceOrTypeName, jsDoc }));
+        allowedValues.unshift((0, types_1.makeTypeContentRoot)({ joinOperation, children, interfaceOrTypeName, jsDoc }));
         return (0, types_1.makeTypeContentRoot)({ joinOperation: 'union', children: allowedValues, interfaceOrTypeName, jsDoc });
     }
-    return (0, types_1.makeTypeContentRoot)({ joinOperation: 'object', children, interfaceOrTypeName, jsDoc });
+    return (0, types_1.makeTypeContentRoot)({ joinOperation, children, interfaceOrTypeName, jsDoc });
 }
