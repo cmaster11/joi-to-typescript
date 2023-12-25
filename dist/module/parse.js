@@ -1,7 +1,7 @@
 import { filterMap, isDescribe, toStringLiteral } from './utils';
 import { makeTypeContentChild, makeTypeContentRoot } from './types';
 import { getAllowValues, getDisableDescription, getInterfaceOrTypeName, getIsReadonly, getMetadataFromDetails } from './joiUtils';
-import { getIndentStr, getJsDocString } from './write';
+import { getIndentStr, getJsDocString } from './write'; // see __tests__/joiTypes.ts for more information
 // see __tests__/joiTypes.ts for more information
 export const supportedJoiTypes = ['array', 'object', 'alternatives', 'any', 'boolean', 'date', 'number', 'string'];
 // @TODO - Temporarily used prevent 'map' and 'set' from being used by cast
@@ -103,34 +103,77 @@ function typeContentToTsHelper(settings, parsedSchema, indentLevel, doExport = f
             }
             return { tsContent: arrayStr, jsDoc: parsedSchema.jsDoc };
         }
-        case 'tuple': {
-            const childrenContent = children.map(child => {
-                let { tsContent } = typeContentToTsHelper(settings, child, indentLevel);
-                if (tsContent.includes('|')) {
-                    tsContent = `(${tsContent})`;
-                }
-                return `${tsContent}${child.required ? '' : '?'}`;
-            });
-            const tupleStr = `[${childrenContent.join(', ')}]`;
-            if (doExport) {
-                return {
-                    tsContent: `export type ${parsedSchema.interfaceOrTypeName} = ${tupleStr};`,
-                    jsDoc: parsedSchema.jsDoc
-                };
-            }
-            return { tsContent: tupleStr, jsDoc: parsedSchema.jsDoc };
-        }
+        case 'tuple':
         case 'union': {
-            const childrenContent = children.map(child => typeContentToTsHelper(settings, child, indentLevel).tsContent);
-            const unionStr = childrenContent.join(' | ');
-            const finalStr = settings.supplyDefaultsInType
-                ? parsedSchema.value !== undefined
-                    ? `${JSON.stringify(parsedSchema.value)} | ${unionStr}`
-                    : unionStr
-                : unionStr;
+            const isTuple = parsedSchema.joinOperation == 'tuple';
+            const indentString = getIndentStr(settings, indentLevel);
+            const itemSeparatorBeforeItem = isTuple ? '' : ' |';
+            const itemSeparatorAfterItem = isTuple ? ',' : '';
+            const itemSeparatorAfterNewline = isTuple ? '' : '|';
+            let hasOneDescription = false;
+            let finalStr;
+            const childrenContent = [];
+            let first = true;
+            let previousIsInline = false;
+            if (settings.supplyDefaultsInType && parsedSchema.value !== undefined) {
+                childrenContent.push(JSON.stringify(parsedSchema.value));
+                previousIsInline = true;
+                first = false;
+            }
+            for (let itemIdx = 0; itemIdx < children.length; itemIdx++) {
+                const child = children[itemIdx];
+                const childInfo = typeContentToTsHelper(settings, child, 
+                // Special case for objects because their contents need to be indented once more
+                child.__isRoot && ['object', 'list', 'tuple'].includes(child.joinOperation) ? indentLevel + 1 : indentLevel);
+                const descriptionStr = getJsDocString(settings, child.interfaceOrTypeName, childInfo.jsDoc, indentLevel);
+                hasOneDescription || (hasOneDescription = descriptionStr != '');
+                // Prevents test failures because of spaces at line endings
+                let childInfoTsContentPrefix = '';
+                if (isTuple) {
+                    if (previousIsInline) {
+                        childInfoTsContentPrefix = ' ';
+                    }
+                }
+                else {
+                    childInfoTsContentPrefix = childInfo.tsContent.startsWith('\n') ? '' : ' ';
+                }
+                /*
+                  Compose the child code line. If there is a description, it must be above the entry.
+                   */
+                let childContent = childInfo.tsContent;
+                if (isTuple) {
+                    if (childContent.includes('|')) {
+                        childContent = `(${childContent})`;
+                    }
+                    childContent += child.required ? '' : '?';
+                }
+                childContent += itemIdx < children.length - 1 ? itemSeparatorAfterItem : '';
+                if (descriptionStr != '') {
+                    // If there is a description it means we also have a new line, which means
+                    // we need to properly indent the following line too.
+                    childrenContent.push((first ? '\n' : '') +
+                        `${descriptionStr}${indentString}${itemSeparatorAfterNewline}${childInfoTsContentPrefix}${childContent}`);
+                    previousIsInline = false;
+                }
+                else {
+                    // Normal inline content
+                    childrenContent.push((first
+                        ? ''
+                        : (previousIsInline ? itemSeparatorBeforeItem : indentString + itemSeparatorAfterNewline) +
+                            childInfoTsContentPrefix) + childContent);
+                    previousIsInline = true;
+                }
+                first = false;
+            }
+            finalStr = childrenContent.join(hasOneDescription ? '\n' : '');
+            if (isTuple) {
+                finalStr = `[${finalStr}${hasOneDescription ? '\n' + getIndentStr(settings, indentLevel - 1) : ''}]`;
+            }
             if (doExport) {
                 return {
-                    tsContent: `export type ${parsedSchema.interfaceOrTypeName} = ${finalStr};`,
+                    tsContent: `export type ${parsedSchema.interfaceOrTypeName} =${
+                    // Prevents test failures because of spaces at line endings
+                    finalStr.startsWith('\n') ? '' : ' '}${finalStr};`,
                     jsDoc: parsedSchema.jsDoc
                 };
             }
@@ -156,7 +199,18 @@ function typeContentToTsHelper(settings, parsedSchema, indentLevel, doExport = f
                     const optionalStr = child.required ? '' : '?';
                     const indentString = getIndentStr(settings, indentLevel);
                     const modifier = child.isReadonly ? 'readonly ' : '';
-                    return `${descriptionStr}${indentString}${modifier}${child.interfaceOrTypeName}${optionalStr}: ${childInfo.tsContent};`;
+                    return [
+                        descriptionStr,
+                        indentString,
+                        modifier,
+                        child.interfaceOrTypeName,
+                        optionalStr,
+                        ':',
+                        // Prevents test failures because of spaces at line endings
+                        childInfo.tsContent.startsWith('\n') ? '' : ' ',
+                        childInfo.tsContent,
+                        ';'
+                    ].join('');
                 });
                 objectStr = `{\n${childrenContent.join('\n')}\n${getIndentStr(settings, indentLevel - 1)}}`;
                 if (parsedSchema.value !== undefined && settings.supplyDefaultsInType) {
@@ -218,15 +272,16 @@ export function parseSchema(details, settings, useLabels = true, ignoreLabels = 
     if (interfaceOrTypeName && useLabels && !ignoreLabels.includes(interfaceOrTypeName)) {
         // skip parsing and just reference the label since we assumed we parsed the schema that the label references
         // TODO: do we want to use the labels description if we reference it?
+        let allowedValues = createAllowTypes(details);
         const child = makeTypeContentChild({
             content: interfaceOrTypeName,
             customTypes: [interfaceOrTypeName],
-            jsDoc,
+            // If we have any allowed values, remove the jsDoc from the child as we will use it in the outer object
+            jsDoc: allowedValues.length > 0 ? undefined : jsDoc,
             required,
             isReadonly
         });
-        let allowedValues = createAllowTypes(details);
-        if (allowedValues.length !== 0) {
+        if (allowedValues.length > 0) {
             if (!((_a = details.flags) === null || _a === void 0 ? void 0 : _a.only)) {
                 allowedValues.unshift(child);
             }
@@ -308,7 +363,7 @@ function parseBasicSchema(details, settings, rootSchema) {
     if (rootSchema) {
         return makeTypeContentRoot({
             joinOperation: 'union',
-            children: [makeTypeContentChild({ content, interfaceOrTypeName, jsDoc })],
+            children: [makeTypeContentChild({ content, interfaceOrTypeName })],
             interfaceOrTypeName,
             jsDoc
         });
@@ -351,7 +406,7 @@ function parseStringSchema(details, settings, rootSchema) {
     if (rootSchema) {
         return makeTypeContentRoot({
             joinOperation: 'union',
-            children: [makeTypeContentChild({ content: 'string', interfaceOrTypeName, jsDoc })],
+            children: [makeTypeContentChild({ content: 'string', interfaceOrTypeName })],
             interfaceOrTypeName,
             jsDoc
         });
@@ -368,12 +423,11 @@ function parseArray(details, settings) {
         const parsedChildren = details.ordered.map(item => parseSchema(item, settings)).filter(Boolean);
         const allowedValues = createAllowTypes(details);
         // at least one value
-        if (allowedValues.length !== 0) {
+        if (allowedValues.length > 0) {
             allowedValues.unshift(makeTypeContentRoot({
                 joinOperation: 'tuple',
                 children: parsedChildren,
-                interfaceOrTypeName,
-                jsDoc
+                interfaceOrTypeName
             }));
             return makeTypeContentRoot({ joinOperation: 'union', children: allowedValues, interfaceOrTypeName, jsDoc });
         }
@@ -416,14 +470,22 @@ function parseArray(details, settings) {
 function parseAlternatives(details, settings) {
     const { interfaceOrTypeName, jsDoc } = getCommonDetails(details, settings);
     const ignoreLabels = interfaceOrTypeName ? [interfaceOrTypeName] : [];
-    const children = filterMap(details.matches, match => {
-        // ignore alternatives().conditional() and return 'any' since we don't handle is / then / otherwise for now
-        if (!match.schema) {
-            return parseSchema({ type: 'any' }, settings, true, ignoreLabels);
-        }
-        return parseSchema(match.schema, settings, true, ignoreLabels);
-    });
-    // This is an check that cannot be tested as Joi throws an error before this package
+    const children = [];
+    if (details.matches === undefined) {
+        // Edge case where the user does not pass ANY content to the `alternatives` function.
+        // In the official docs: If no schemas are added, the type will not match any value except for undefined.
+        children.push(makeTypeContentChild({ content: 'undefined' }));
+    }
+    else {
+        children.push(...filterMap(details.matches, match => {
+            // ignore alternatives().conditional() and return 'any' since we don't handle is / then / otherwise for now
+            if (!match.schema) {
+                return parseSchema({ type: 'any' }, settings, true, ignoreLabels);
+            }
+            return parseSchema(match.schema, settings, true, ignoreLabels);
+        }));
+    }
+    // This is a check that cannot be tested as Joi throws an error before this package
     // can be called, there is test for it in alternatives
     if (children.length === 0) {
         /* istanbul ignore next */
