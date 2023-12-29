@@ -81,7 +81,11 @@ export function getJsDocString(settings: Settings, name: string, jsDoc?: JsDoc, 
   lines.unshift('/**');
   lines.push(' */');
 
-  return lines.map(line => `${getIndentStr(settings, indentLevel)}${line}`).join('\n') + '\n';
+  if (settings.newlineBeforeJsDoc) {
+    lines.unshift('');
+  }
+
+  return lines.map(line => `${getIndentStr(settings, indentLevel)}${line}`.trimEnd()).join('\n') + '\n';
 }
 
 interface GetStringIndentationResult {

@@ -216,4 +216,37 @@ export interface HelloTest {
 }`);
     }
   });
+
+  test('Newline before JsDoc', () => {
+    const converted = convertSchema(
+      {
+        newlineBeforeJsDoc: true
+      },
+      Joi.object({
+        hello: Joi.string().description('Hello world')
+      })
+        .example({
+          hello: 'world'
+        })
+        .description('My object!'),
+      'HelloTest'
+    );
+    expect(converted).toBeDefined();
+    expect(converted?.content).toEqual(`
+/**
+ * My object!
+ *
+ * @example
+ * {
+ *   "hello": "world"
+ * }
+ */
+export interface HelloTest {
+
+  /**
+   * Hello world
+   */
+  hello?: string;
+}`);
+  });
 });

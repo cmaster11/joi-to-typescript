@@ -269,6 +269,10 @@ export interface Settings {
    * generated interface/type code.
    */
   tsContentFooter?: (type: ConvertedType) => string;
+  /**
+   * If provided, forces a newline before every JsDoc block.
+   */
+  newlineBeforeJsDoc?: boolean;
 }
 ```
 
