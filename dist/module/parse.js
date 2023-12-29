@@ -148,11 +148,12 @@ function typeContentToTsHelper(settings, parsedSchema, indentLevel, doExport = f
                     childContent += child.required ? '' : '?';
                 }
                 childContent += itemIdx < children.length - 1 ? itemSeparatorAfterItem : '';
-                if (descriptionStr != '') {
+                if (descriptionStr != '' || (!isTuple && settings.unionNewLine) || (isTuple && settings.tupleNewLine)) {
                     // If there is a description it means we also have a new line, which means
                     // we need to properly indent the following line too.
+                    const prefix = descriptionStr != '' ? descriptionStr : first ? '' : '\n';
                     childrenContent.push((first ? '\n' : '') +
-                        `${descriptionStr}${indentString}${itemSeparatorAfterNewline}${childInfoTsContentPrefix}${childContent}`);
+                        `${prefix}${indentString}${itemSeparatorAfterNewline}${childInfoTsContentPrefix}${childContent}`);
                     previousIsInline = false;
                 }
                 else {
@@ -167,7 +168,7 @@ function typeContentToTsHelper(settings, parsedSchema, indentLevel, doExport = f
             }
             finalStr = childrenContent.join(hasOneDescription ? '\n' : '');
             if (isTuple) {
-                finalStr = `[${finalStr}${hasOneDescription ? '\n' + getIndentStr(settings, indentLevel - 1) : ''}]`;
+                finalStr = `[${finalStr}${hasOneDescription ? '\n' + getIndentStr(settings, indentLevel - 1) : ''}${settings.tupleNewLine ? '\n' + getIndentStr(settings, indentLevel - 1) : ''}]`;
             }
             if (doExport) {
                 return {
@@ -186,7 +187,7 @@ function typeContentToTsHelper(settings, parsedSchema, indentLevel, doExport = f
                     return { tsContent: 'object', jsDoc: parsedSchema.jsDoc };
                 }
                 else {
-                    return { tsContent: '{}', jsDoc: parsedSchema.jsDoc };
+                    return { tsContent: 'Record<string, never>', jsDoc: parsedSchema.jsDoc };
                 }
             }
             // interface can have no properties {} if the joi object has none defined
