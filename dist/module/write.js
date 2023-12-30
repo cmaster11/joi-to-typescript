@@ -47,9 +47,7 @@ export function getJsDocString(settings, name, jsDoc, indentLevel = 0) {
         if (jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.description) {
             description = getStringIndentation(jsDoc.description).deIndentedString;
         }
-        if (description) {
-            lines.push(...description.split('\n').map(line => ` * ${line}`.trimEnd()));
-        }
+        lines.push(...description.split('\n').map(line => ` * ${line}`.trimEnd()));
     }
     // Add a JsDoc divider if needed
     if (((_d = (_c = jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.examples) === null || _c === void 0 ? void 0 : _c.length) !== null && _d !== void 0 ? _d : 0) > 0 && lines.length > 0) {
@@ -64,9 +62,6 @@ export function getJsDocString(settings, name, jsDoc, indentLevel = 0) {
         else {
             lines.push(` * @example ${deIndented}`);
         }
-    }
-    if (lines.length == 0) {
-        return '';
     }
     // Add JsDoc boundaries
     lines.unshift('/**');
