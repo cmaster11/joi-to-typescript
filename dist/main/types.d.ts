@@ -1,3 +1,4 @@
+import Joi from 'joi';
 /**
  * Application settings
  */
@@ -136,6 +137,7 @@ export declare class InputFileFilter {
     static readonly IncludeJavaScript: RegExp;
 }
 export interface ConvertedType {
+    schema: Joi.Schema;
     interfaceOrTypeName: string;
     content: string;
     customTypes: string[];

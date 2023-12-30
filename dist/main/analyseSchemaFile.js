@@ -59,6 +59,7 @@ function convertSchemaInternal(settings, joi, exportedName, rootSchema) {
         const customTypes = (0, parse_1.getAllCustomTypes)(parsedSchema);
         const content = (0, parse_1.typeContentToTs)(settings, parsedSchema, true);
         return {
+            schema: joi,
             interfaceOrTypeName,
             customTypes,
             content
