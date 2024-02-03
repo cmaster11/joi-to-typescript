@@ -11,7 +11,7 @@ export async function writeInterfaceFile(settings, typeFileName, generatedTypes)
         let typeImports = '';
         if (settings.flattenTree) {
             const externalTypeNames = generatedFile.externalTypes.map(typeToBeWritten => typeToBeWritten.customTypes).flat();
-            typeImports = externalTypeNames.length == 0 ? '' : `import { ${externalTypeNames.join(', ')} } from '.';\n\n`;
+            typeImports = externalTypeNames.length === 0 ? '' : `import { ${externalTypeNames.join(', ')} } from '.';\n\n`;
         }
         else {
             const customTypeLocationDict = {};
@@ -58,7 +58,7 @@ export async function writeInterfaceFile(settings, typeFileName, generatedTypes)
             for (const customTypeLocation in customTypeLocationDict) {
                 let relativePath = Path.relative(generatedFile.typeFileLocation, customTypeLocation);
                 relativePath = relativePath ? `${relativePath}` : '.';
-                relativePath = relativePath.includes('..') || relativePath == '.' ? relativePath : `./${relativePath}`;
+                relativePath = relativePath.includes('..') || relativePath === '.' ? relativePath : `./${relativePath}`;
                 typeImports += `import { ${customTypeLocationDict[customTypeLocation].join(', ')} } from '${relativePath.replace(/\\/g, '/')}';\n`;
             }
             if (typeImports) {

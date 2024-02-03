@@ -35,10 +35,10 @@ export function getIndentStr(settings, indentLevel) {
  */
 export function getJsDocString(settings, name, jsDoc, indentLevel = 0) {
     var _a, _b, _c, _d, _e;
-    if ((jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.disable) == true) {
+    if ((jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.disable) === true) {
         return '';
     }
-    if (!settings.commentEverything && !(jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.description) && ((_b = (_a = jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.examples) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0) == 0) {
+    if (!settings.commentEverything && !(jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.description) && ((_b = (_a = jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.examples) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0) === 0) {
         return '';
     }
     const lines = [];
@@ -65,7 +65,7 @@ export function getJsDocString(settings, name, jsDoc, indentLevel = 0) {
             lines.push(` * @example ${deIndented}`);
         }
     }
-    if (lines.length == 0) {
+    if (lines.length === 0) {
         return '';
     }
     // Add JsDoc boundaries
@@ -83,7 +83,7 @@ function getStringIndentation(value) {
     let indent = '';
     for (const line of lines) {
         // Skip initial newlines
-        if (line.trim() == '') {
+        if (line.trim() === '') {
             continue;
         }
         const match = /^(\s+)\b/.exec(line);

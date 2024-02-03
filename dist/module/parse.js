@@ -15,9 +15,9 @@ function getCommonDetails(details, settings) {
     const value = (_c = details.flags) === null || _c === void 0 ? void 0 : _c.default;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const examples = (details.examples || [])
-        .filter(e => e != undefined)
+        .filter(e => e !== undefined)
         .map(example => {
-        return typeof example == 'object'
+        return typeof example === 'object'
             ? // Joi accepts `any` as type for an example
                 JSON.stringify(example, null, 2)
             : example.toString();
@@ -112,7 +112,7 @@ function typeContentToTsHelper(settings, parsedSchema, indentLevel, doExport = f
         }
         case 'tuple':
         case 'union': {
-            const isTuple = parsedSchema.joinOperation == 'tuple';
+            const isTuple = parsedSchema.joinOperation === 'tuple';
             const indentString = getIndentStr(settings, indentLevel);
             const itemSeparatorBeforeItem = isTuple ? '' : ' |';
             const itemSeparatorAfterItem = isTuple ? ',' : '';
@@ -139,7 +139,7 @@ function typeContentToTsHelper(settings, parsedSchema, indentLevel, doExport = f
                 // Special case for objects because their contents need to be indented once more
                 child.__isRoot && ['object', 'list', 'tuple'].includes(child.joinOperation) ? indentLevel + 1 : indentLevel);
                 const descriptionStr = getJsDocString(settings, child.interfaceOrTypeName, childInfo.jsDoc, indentLevel);
-                hasOneDescription || (hasOneDescription = descriptionStr != '');
+                hasOneDescription || (hasOneDescription = descriptionStr !== '');
                 // Prevents test failures because of spaces at line endings
                 let childInfoTsContentPrefix = '';
                 if (isTuple) {
@@ -170,12 +170,12 @@ function typeContentToTsHelper(settings, parsedSchema, indentLevel, doExport = f
                     }
                 }
                 childContent += itemIdx < children.length - 1 ? itemSeparatorAfterItem : '';
-                if (descriptionStr != '' ||
+                if (descriptionStr !== '' ||
                     (children.length > 1 && ((!isTuple && settings.unionNewLine) || (isTuple && settings.tupleNewLine)))) {
                     // If there is a description it means we also have a new line, which means
                     // we need to properly indent the following line too.
                     let prefix = descriptionStr;
-                    if (prefix == '') {
+                    if (prefix === '') {
                         if (first) {
                             prefix = '';
                         }
@@ -184,7 +184,7 @@ function typeContentToTsHelper(settings, parsedSchema, indentLevel, doExport = f
                         }
                     }
                     let tsContentPrefix = childInfoTsContentPrefix;
-                    if (tsContentPrefix == '') {
+                    if (tsContentPrefix === '') {
                         // Handle the case where we are wrapping the child content, and we need
                         // to make some space between the union operator and the content
                         if (itemPrefixWithIndent.endsWith('|') && childContent.startsWith('(')) {
@@ -222,7 +222,7 @@ function typeContentToTsHelper(settings, parsedSchema, indentLevel, doExport = f
         case 'objectWithUndefinedKeys':
         case 'object': {
             if (!children.length && !doExport) {
-                if (parsedSchema.joinOperation == 'objectWithUndefinedKeys') {
+                if (parsedSchema.joinOperation === 'objectWithUndefinedKeys') {
                     return { tsContent: 'object', jsDoc: parsedSchema.jsDoc };
                 }
                 else {
@@ -339,32 +339,36 @@ export function parseSchema(details, settings, useLabels = true, ignoreLabels = 
         }
         return child;
     }
-    if (!supportedJoiTypes.includes(details.type)) {
-        // See if we can find a base type for this type in the details.
-        let typeToUse;
-        const baseTypes = getMetadataFromDetails('baseType', details);
-        if (baseTypes.length > 0) {
-            // If there are multiple base types then the deepest one will be at the
-            // end of the list which is most likely the one to use.
-            typeToUse = baseTypes.pop();
+    const baseTypes = getMetadataFromDetails('baseType', details);
+    if (baseTypes.length > 0) {
+        // If there is a baseType defined, then the user is overriding the
+        // type definition.
+        // If there are multiple base types then the deepest one will be at the
+        // end of the list which is most likely the one to use.
+        const typeToUse = baseTypes.pop();
+        if (settings.debug) {
+            // eslint-disable-next-line no-console
+            console.debug(`Using user-defined '${typeToUse}' for type '${details.type}'`);
         }
-        // If we could not get the base type from the metadata then see if we can
-        // map it to something sensible. If not, then set it to 'unknown'.
-        if (typeToUse === undefined) {
-            switch (details.type) {
-                case 'function':
-                    typeToUse = '((...args: any[]) => any)';
-                    break;
-                case 'symbol':
-                    typeToUse = 'symbol';
-                    break;
-                case 'binary':
-                    typeToUse = 'Buffer';
-                    break;
-                default:
-                    typeToUse = 'unknown';
-                    break;
-            }
+        return makeTypeContentChild({ content: typeToUse, interfaceOrTypeName, jsDoc, required, isReadonly });
+    }
+    else if (!supportedJoiTypes.includes(details.type)) {
+        let typeToUse;
+        // Let's see if we can map the type to something sensible.
+        // If not, then set it to 'unknown'.
+        switch (details.type) {
+            case 'function':
+                typeToUse = '((...args: any[]) => any)';
+                break;
+            case 'symbol':
+                typeToUse = 'symbol';
+                break;
+            case 'binary':
+                typeToUse = 'Buffer';
+                break;
+            default:
+                typeToUse = 'unknown';
+                break;
         }
         if (settings.debug) {
             // eslint-disable-next-line no-console
@@ -437,7 +441,7 @@ function parseStringSchema(details, settings, rootSchema) {
             const allowedValues = values.map(value => stringAllowValues.includes(value) && value !== ''
                 ? makeTypeContentChild({ content: `${value}` })
                 : makeTypeContentChild({ content: toStringLiteral(value) }));
-            if (values.filter(value => stringAllowValues.includes(value)).length == values.length) {
+            if (values.filter(value => stringAllowValues.includes(value)).length === values.length) {
                 allowedValues.unshift(makeTypeContentChild({ content: 'string' }));
             }
             return makeTypeContentRoot({ joinOperation: 'union', children: allowedValues, interfaceOrTypeName, jsDoc });
