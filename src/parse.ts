@@ -33,7 +33,20 @@ function getCommonDetails(
 
   const description = details.flags?.description;
   const presence = details.flags?.presence;
-  const value = details.flags?.default;
+  let value = details.flags?.default;
+  if (
+    value &&
+    typeof value === 'object' &&
+    'special' in value &&
+    value.special === 'deep' &&
+    Object.keys(value).length === 1
+  ) {
+    // Special case. When using the empty `default()` function on
+    // a schema entry, Joi adds a special symbol to the entry, which
+    // is converted to {"special": "deep"} via describe.
+    // When this case comes up, we can ignore it.
+    value = undefined;
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const examples: string[] = ((details.examples || []) as any[])
@@ -288,6 +301,7 @@ function typeContentToTsHelper(
 
       // interface can have no properties {} if the joi object has none defined
       let objectStr = '{}';
+      let hasDefault = false;
 
       if (children.length !== 0) {
         const childrenContent = children.map(child => {
@@ -320,9 +334,16 @@ function typeContentToTsHelper(
 
         if (parsedSchema.value !== undefined && settings.supplyDefaultsInType) {
           objectStr = getDefaultTypeTsContent(settings, indentLevel, parsedSchema, objectStr);
+          hasDefault = true;
         }
       }
       if (doExport) {
+        if (hasDefault) {
+          return {
+            tsContent: `export type ${parsedSchema.interfaceOrTypeName} = ${objectStr}`,
+            jsDoc: parsedSchema.jsDoc
+          };
+        }
         return {
           tsContent: `export interface ${parsedSchema.interfaceOrTypeName} ${objectStr}`,
           jsDoc: parsedSchema.jsDoc
