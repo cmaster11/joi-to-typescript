@@ -12,7 +12,18 @@ function getCommonDetails(details, settings) {
     const interfaceOrTypeName = getInterfaceOrTypeName(settings, details);
     const description = (_a = details.flags) === null || _a === void 0 ? void 0 : _a.description;
     const presence = (_b = details.flags) === null || _b === void 0 ? void 0 : _b.presence;
-    const value = (_c = details.flags) === null || _c === void 0 ? void 0 : _c.default;
+    let value = (_c = details.flags) === null || _c === void 0 ? void 0 : _c.default;
+    if (value &&
+        typeof value === 'object' &&
+        'special' in value &&
+        value.special === 'deep' &&
+        Object.keys(value).length === 1) {
+        // Special case. When using the empty `default()` function on
+        // a schema entry, Joi adds a special symbol to the entry, which
+        // is converted to {"special": "deep"} via describe.
+        // When this case comes up, we can ignore it.
+        value = undefined;
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const examples = (details.examples || [])
         .filter(e => e !== undefined)
@@ -231,6 +242,7 @@ function typeContentToTsHelper(settings, parsedSchema, indentLevel, doExport = f
             }
             // interface can have no properties {} if the joi object has none defined
             let objectStr = '{}';
+            let hasDefault = false;
             if (children.length !== 0) {
                 const childrenContent = children.map(child => {
                     const childInfo = typeContentToTsHelper(settings, child, indentLevel + 1, false);
@@ -255,9 +267,16 @@ function typeContentToTsHelper(settings, parsedSchema, indentLevel, doExport = f
                 objectStr = `{\n${childrenContent.join('\n')}\n${getIndentStr(settings, indentLevel - 1)}}`;
                 if (parsedSchema.value !== undefined && settings.supplyDefaultsInType) {
                     objectStr = getDefaultTypeTsContent(settings, indentLevel, parsedSchema, objectStr);
+                    hasDefault = true;
                 }
             }
             if (doExport) {
+                if (hasDefault) {
+                    return {
+                        tsContent: `export type ${parsedSchema.interfaceOrTypeName} = ${objectStr}`,
+                        jsDoc: parsedSchema.jsDoc
+                    };
+                }
                 return {
                     tsContent: `export interface ${parsedSchema.interfaceOrTypeName} ${objectStr}`,
                     jsDoc: parsedSchema.jsDoc
