@@ -43,7 +43,7 @@ npm install joi
 ```
 
 - This has been built for `"joi": "^17"` and will not work for older versions
-- Minimum node version 12 as Joi requires node 12
+- Supported node versions 16, 18, 20
 
 ## Suggested Usage
 
@@ -248,6 +248,12 @@ export interface Settings {
    * @default false
    */
   supplyDefaultsInType: boolean;
+  /**
+   * If a field has a default value, add its stringified representation
+   * to the JsDoc using the @default annotation
+   * @default false
+   */
+  supplyDefaultsInJsDoc: boolean;
   /**
    * Filter files you wish to parse
    * The class `InputFileFilter` contains some default options
