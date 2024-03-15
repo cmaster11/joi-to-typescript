@@ -32,9 +32,7 @@ function getCommonDetails(details, settings) {
         // Ref: https://github.com/hapijs/joi/blob/e7e9c5d18dafaa510a7ece02c225653db5fc998f/lib/manifest.js#L179
         value = undefined;
     }
-    const defaultJsDoc = settings.supplyDefaultsInJsDoc && details.flags && 'default' in details.flags
-        ? node_util_1.default.inspect(details.flags.default, { depth: null })
-        : undefined;
+    const defaultJsDoc = settings.supplyDefaultsInJsDoc && value !== undefined ? node_util_1.default.inspect(value, { depth: null }) : undefined;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const examples = (details.examples || [])
         .filter(e => e !== undefined)
