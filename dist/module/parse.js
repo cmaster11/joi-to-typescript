@@ -22,8 +22,12 @@ function getCommonDetails(details, settings) {
         // a schema entry, Joi adds a special symbol to the entry, which
         // is converted to {"special": "deep"} via describe.
         // When this case comes up, we can ignore it.
+        // Ref: https://github.com/hapijs/joi/blob/e7e9c5d18dafaa510a7ece02c225653db5fc998f/lib/manifest.js#L179
         value = undefined;
     }
+    const defaultJsDoc = settings.supplyDefaultsInJsDoc && details.flags && 'default' in details.flags
+        ? JSON.stringify(details.flags.default)
+        : undefined;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const examples = (details.examples || [])
         .filter(e => e !== undefined)
@@ -48,7 +52,7 @@ function getCommonDetails(details, settings) {
     }
     return {
         interfaceOrTypeName,
-        jsDoc: { description, examples, disable: disableJsDoc },
+        jsDoc: { description, examples, default: defaultJsDoc, disable: disableJsDoc },
         required,
         value,
         isReadonly

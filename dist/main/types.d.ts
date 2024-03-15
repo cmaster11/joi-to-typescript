@@ -89,9 +89,15 @@ export interface Settings {
     /**
      * If a field has a default, modify the resulting field to equal
      * `field: <default> | type` rather than `field: type`
-     * @defatult false
+     * @default false
      */
     readonly supplyDefaultsInType: boolean;
+    /**
+     * If a field has a default value, add its stringified representation
+     * to the JsDoc using the @default annotation
+     * @default false
+     */
+    readonly supplyDefaultsInJsDoc: boolean;
     /**
      * Filter files you wish to parse
      * The class `InputFileFilter` contains some default options
@@ -258,6 +264,10 @@ export interface JsDoc {
      * @example example values
      */
     examples?: string[];
+    /**
+     * @default default value
+     */
+    default?: string;
     /**
      * If true, completely disables printing JsDoc
      */

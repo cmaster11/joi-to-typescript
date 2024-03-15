@@ -47,7 +47,7 @@ function getJsDocString(settings, name, jsDoc, indentLevel = 0) {
     if ((jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.disable) === true) {
         return '';
     }
-    if (!settings.commentEverything && !(jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.description) && ((_b = (_a = jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.examples) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0) === 0) {
+    if (!settings.commentEverything && !(jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.description) && !(jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.default) && ((_b = (_a = jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.examples) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0) === 0) {
         return '';
     }
     const lines = [];
@@ -61,8 +61,18 @@ function getJsDocString(settings, name, jsDoc, indentLevel = 0) {
         }
     }
     // Add a JsDoc divider if needed
-    if (((_d = (_c = jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.examples) === null || _c === void 0 ? void 0 : _c.length) !== null && _d !== void 0 ? _d : 0) > 0 && lines.length > 0) {
+    if ((((_d = (_c = jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.examples) === null || _c === void 0 ? void 0 : _c.length) !== null && _d !== void 0 ? _d : 0) > 0 || (jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.default)) && lines.length > 0) {
         lines.push(' *');
+    }
+    if (jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.default) {
+        const deIndented = getStringIndentation(jsDoc.default).deIndentedString;
+        if (deIndented.includes('\n')) {
+            lines.push(` * @default`);
+            lines.push(...deIndented.split('\n').map(line => ` * ${line}`.trimEnd()));
+        }
+        else {
+            lines.push(` * @default ${deIndented}`);
+        }
     }
     for (const example of (_e = jsDoc === null || jsDoc === void 0 ? void 0 : jsDoc.examples) !== null && _e !== void 0 ? _e : []) {
         const deIndented = getStringIndentation(example).deIndentedString;
