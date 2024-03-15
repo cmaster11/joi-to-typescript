@@ -1,10 +1,14 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.parseSchema = exports.typeContentToTs = exports.getAllCustomTypes = exports.supportedJoiTypes = void 0;
 const utils_1 = require("./utils");
 const types_1 = require("./types");
 const joiUtils_1 = require("./joiUtils");
-const write_1 = require("./write"); // see __tests__/joiTypes.ts for more information
+const write_1 = require("./write");
+const node_util_1 = __importDefault(require("node:util")); // see __tests__/joiTypes.ts for more information
 // see __tests__/joiTypes.ts for more information
 exports.supportedJoiTypes = ['array', 'object', 'alternatives', 'any', 'boolean', 'date', 'number', 'string'];
 // @TODO - Temporarily used prevent 'map' and 'set' from being used by cast
@@ -29,7 +33,7 @@ function getCommonDetails(details, settings) {
         value = undefined;
     }
     const defaultJsDoc = settings.supplyDefaultsInJsDoc && details.flags && 'default' in details.flags
-        ? JSON.stringify(details.flags.default)
+        ? node_util_1.default.inspect(details.flags.default, { depth: null })
         : undefined;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const examples = (details.examples || [])
